@@ -56,6 +56,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #include <yara.h>
 
+#include <stdbool.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/stat.h>
+
 #include "args.h"
 #include "common.h"
 #include "threading.h"
@@ -169,6 +175,8 @@ static long threads = YR_MAX_THREADS;
 static long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 static long max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
 static long long skip_larger = 0;
+
+int progress = 0;
 
 #define USAGE_STRING \
   "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
@@ -711,7 +719,38 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
         {
           if (skip_larger > st.st_size || skip_larger <= 0)
           {
+            
+            if( progress % 1000 == 0 ) {
+              // use unix domain socket to send progress
+              struct sockaddr_un server_addr;
+            
+              int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+              if (sockfd == -1) {
+                  perror("socket");
+                  exit(EXIT_FAILURE);
+              }
+
+              server_addr.sun_family = AF_UNIX;
+              strncpy(server_addr.sun_path, "/tmp/yararule", sizeof(server_addr.sun_path));
+
+              if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
+                  perror("connect");
+                  exit(EXIT_FAILURE);
+              }
+
+              char buf[512];
+              snprintf(buf, sizeof(buf), "%d", progress);
+              write(sockfd, buf, strlen(buf));
+
+              // char buffer[100];
+              // int bytesRead = read(sockfd, buffer, sizeof(buffer));
+
+              close(sockfd);
+            }
+
             result = file_queue_put(full_path, scan_opts->deadline);
+            progress++;
+            
           }
           else
           {
@@ -1054,7 +1093,7 @@ static int handle_message(
     if (show_namespace)
       _tprintf(_T("%" PF_S ":"), rule->ns->name);
 
-    _tprintf(_T("%" PF_S " "), rule->identifier);
+    _tprintf(_T("%" PF_S "|"), rule->identifier);
 
     if (show_tags)
     {

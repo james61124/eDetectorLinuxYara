@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_RE_YY_RE_GRAMMAR_H_INCLUDED
-# define YY_RE_YY_RE_GRAMMAR_H_INCLUDED
+#ifndef YY_RE_YY_LIBYARA_RE_GRAMMAR_H_INCLUDED
+# define YY_RE_YY_LIBYARA_RE_GRAMMAR_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -91,14 +91,14 @@ extern int re_yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 75 "re_grammar.y"
+#line 75 "libyara/re_grammar.y"
 
   int integer;
   uint32_t range;
   RE_NODE* re_node;
   RE_CLASS* re_class;
 
-#line 102 "re_grammar.h"
+#line 102 "libyara/re_grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -112,4 +112,4 @@ typedef union YYSTYPE YYSTYPE;
 int re_yyparse (void *yyscanner, RE_LEX_ENVIRONMENT *lex_env);
 
 
-#endif /* !YY_RE_YY_RE_GRAMMAR_H_INCLUDED  */
+#endif /* !YY_RE_YY_LIBYARA_RE_GRAMMAR_H_INCLUDED  */
